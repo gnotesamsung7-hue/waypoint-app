@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B1F3F">
+<title>Waypoint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2B1F3F; --card:#3A2B54; --card2:#4A3870; --text:#FFF4EC; --muted:#CDBFE0;
+  --peach:#FFB38A; --mint:#8FE3C8; --line:rgba(255,255,255,.13); --screen:#1A1228;
+  --on-accent:#2B1F3F; --accent-text:#FFB38A; color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#FFF4EC; --card:#FFFFFF; --card2:#FBE3D4; --text:#2B1F3F; --muted:#6D5C85;
+  --line:rgba(43,31,63,.15); --accent-text:#A8491F; color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{
+  font-family:'Fredoka',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:18px;line-height:1.35;min-height:100vh;min-height:100dvh;
+  -webkit-tap-highlight-color:transparent;
+}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+
+/* Buddy */
+.top{display:flex;flex-direction:column;align-items:center;gap:12px;margin:4px 0 16px}
+.bubble{
+  position:relative;max-width:100%;min-height:3.1em;display:flex;align-items:center;justify-content:center;
+  text-align:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 18px;
+}
+.bubble::after{
+  content:"";position:absolute;bottom:-9px;left:50%;margin-left:-8px;width:16px;height:16px;
+  background:var(--card);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg);
+}
+.buddy{
+  width:124px;height:90px;background:var(--screen);border:3px solid var(--peach);border-radius:26px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+}
+.eyes{display:flex;gap:28px}
+.eye{width:17px;height:25px;border-radius:7px;background:var(--peach);box-shadow:0 0 12px var(--peach);transition:transform .07s}
+.buddy.blink .eye{transform:scaleY(.12)}
+.mouth{width:32px;height:15px;border:3px solid var(--peach);border-top:none;border-radius:0 0 18px 18px}
+.buddy.listening{border-color:var(--mint)}
+.buddy.listening .eye{background:var(--mint);box-shadow:0 0 12px var(--mint)}
+.buddy.listening .mouth{width:15px;height:15px;border:3px solid var(--mint);border-radius:50%}
+
+/* Forms and cards */
+.field{display:block;margin-bottom:12px}
+.field>span{display:block;font-weight:500;margin-bottom:6px}
+.field em{font-style:normal;font-weight:400;color:var(--muted)}
+input[type=text]{
+  width:100%;min-height:52px;border-radius:14px;border:1px solid var(--line);background:var(--card);
+  color:var(--text);padding:0 14px;font:inherit;
+}
+input::placeholder{color:var(--muted);opacity:.85}
+select{
+  width:100%;min-height:52px;border-radius:14px;border:1px solid var(--line);background:var(--card);
+  color:var(--text);padding:0 12px;font:inherit;
+}
+select:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:14px}
+.card input[type=text],.card select{background:var(--bg)}
+.hint{color:var(--muted);font-size:15px;margin:10px 0 0}
+h2{font-size:18px;font-weight:600;margin:0 0 8px}
+.title{font-size:28px;font-weight:600;text-align:center;margin:0 0 14px;overflow-wrap:anywhere}
+.checklist,.thoughts{list-style:none;margin:0 0 10px;padding:0}
+.checklist li,.thoughts li{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.checklist li:last-child,.thoughts li:last-child{border-bottom:none}
+.checklist label{flex:1;display:flex;align-items:center;gap:12px;min-height:50px;cursor:pointer;overflow-wrap:anywhere}
+.checklist input[type=checkbox]{width:24px;height:24px;accent-color:var(--mint);flex:none;margin:0}
+.checklist input:checked+span{color:var(--muted);text-decoration:line-through}
+.empty{color:var(--muted);padding:10px 0}
+.x{width:44px;height:44px;border:none;background:none;color:var(--muted);font-size:26px;line-height:1;border-radius:12px;flex:none}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;min-height:48px}
+.add-row button{min-height:48px;padding:0 18px;border-radius:14px;border:none;background:var(--card2);color:var(--text);font-weight:500}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.seg.three{grid-template-columns:repeat(3,1fr)}
+.seg button{min-height:52px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font-weight:500}
+.seg button[aria-pressed=true]{background:var(--mint);color:var(--on-accent);border-color:transparent}
+
+/* Buttons */
+.big{width:100%;min-height:62px;border-radius:18px;border:none;font-size:21px;font-weight:600}
+.primary{background:var(--peach);color:var(--on-accent)}
+.mint{background:var(--mint);color:var(--on-accent)}
+.ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
+.huge{
+  width:100%;min-height:150px;border-radius:28px;border:3px solid var(--peach);background:var(--card);
+  color:var(--text);font-size:28px;font-weight:600;
+}
+.huge.listening{border-color:var(--mint);background:var(--card2)}
+.link{display:block;width:100%;min-height:48px;margin-top:6px;background:none;border:none;color:var(--muted);text-decoration:underline}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+
+/* Driving */
+.dest-card{text-align:center;padding:18px 16px}
+.label{color:var(--muted);font-size:16px}
+.dest{font-size:40px;font-weight:600;line-height:1.1;margin:4px 0;overflow-wrap:anywhere}
+.reason{font-size:22px;color:var(--accent-text);overflow-wrap:anywhere}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;text-align:center}
+.stat b{display:block;font-size:34px;font-weight:600}
+.stat small{color:var(--muted);font-size:15px}
+.count{text-align:center;color:var(--muted);margin-top:12px;min-height:1.4em}
+
+/* Arrived */
+.thoughts li{align-items:flex-start;padding:8px 0}
+.thoughts .time{color:var(--muted);font-size:15px;min-width:70px;padding-top:12px}
+.thoughts .text{flex:1;padding-top:10px;overflow-wrap:anywhere}
+.thoughts .marker{color:var(--muted);font-style:italic}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top">
+    <div class="bubble" id="bubble" aria-live="polite">Hi! Where are we headed?</div>
+    <div class="buddy" id="buddy" aria-hidden="true">
+      <div class="eyes"><span class="eye"></span><span class="eye"></span></div>
+      <div class="mouth"></div>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <section id="screen-setup">
+    <label class="field"><span>Where to?</span>
+      <input type="text" id="dest" placeholder="Pharmacy" autocomplete="off" enterkeyhint="next"></label>
+    <label class="field"><span>Why? <em>(so future-you remembers)</em></span>
+      <input type="text" id="reason" placeholder="Pick up prescription" autocomplete="off" enterkeyhint="done"></label>
+
+    <div class="card">
+      <h2>Before you drive</h2>
+      <ul class="checklist" id="pre-list"></ul>
+      <form class="add-row" data-list="pre"><input type="text" placeholder="Add an item" aria-label="Add a pre-drive item"><button>Add</button></form>
+    </div>
+
+    <div class="card">
+      <h2>Check in every</h2>
+      <div class="seg" id="interval">
+        <button type="button" data-min="5">5 min</button>
+        <button type="button" data-min="10">10 min</button>
+        <button type="button" data-min="15">15 min</button>
+        <button type="button" data-min="0">Off</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Buddy's voice</h2>
+      <label class="field" id="engine-field" hidden><span>Voice engine</span><select id="engine"></select></label>
+      <label class="field"><span>Voice</span><select id="voice"></select></label>
+      <div class="field"><span>Speed</span>
+        <div class="seg three" id="rate">
+          <button type="button" data-rate="0.9">Relaxed</button>
+          <button type="button" data-rate="1">Normal</button>
+          <button type="button" data-rate="1.15">Brisk</button>
+        </div>
+      </div>
+      <button class="big ghost" id="try-voice" type="button">Try this voice</button>
+      <p class="hint" id="voice-hint"></p>
+    </div>
+
+    <button class="big primary" id="go">Let's go</button>
+    <button class="link" id="theme"></button>
+  </section>
+
+  <!-- DRIVING -->
+  <section id="screen-drive" hidden>
+    <div class="card dest-card">
+      <div class="label">Headed to</div>
+      <div class="dest" id="d-dest"></div>
+      <div class="reason" id="d-reason"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="d-min">0</b><small>min driving</small></div>
+      <div class="stat"><b id="d-next">–</b><small id="d-next-label">min to check-in</small></div>
+    </div>
+    <button class="huge" id="park">Park a thought</button>
+    <div class="row">
+      <button class="big ghost" id="mute" aria-pressed="false">Mute</button>
+      <button class="big mint" id="arrived">I've arrived</button>
+    </div>
+    <div class="count" id="d-count"></div>
+  </section>
+
+  <!-- ARRIVED -->
+  <section id="screen-arrive" hidden>
+    <h1 class="title" id="a-title">You made it!</h1>
+    <div class="card">
+      <h2>Before you walk away</h2>
+      <ul class="checklist" id="post-list"></ul>
+      <form class="add-row" data-list="post"><input type="text" placeholder="Add an item" aria-label="Add a post-drive item"><button>Add</button></form>
+    </div>
+    <div class="card">
+      <h2>Where'd you park?</h2>
+      <input type="text" id="park-note" placeholder="Level 2, near the elevator" autocomplete="off">
+    </div>
+    <div class="card">
+      <h2>Parked thoughts</h2>
+      <ul class="thoughts" id="thoughts"></ul>
+      <button class="big ghost" id="copy" hidden>Copy all</button>
+    </div>
+    <button class="big primary" id="done">Done</button>
+    <button class="link" id="back-drive">Oops, still driving</button>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (s) { return document.querySelector(s); };
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem('wp.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem('wp.' + k, JSON.stringify(v)); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem('wp.' + k); } catch (e) {} }
+  };
+
+  var native = window.Android || null;
+  var LISTEN_TIMEOUT = native ? 20000 : 10000;
+  var reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  var DEFAULTS = {
+    pre: ['Phone charged & mounted', 'Directions ready', 'Wallet & keys', 'Water or a snack', 'Mirrors & seat set'],
+    post: ['Phone', 'Wallet & keys', 'Lights off', 'Windows up', 'Car locked']
+  };
+  var uid = Date.now();
+  function newId() { return (uid++).toString(36); }
+  function loadList(key) {
+    var saved = store.get(key, null);
+    if (!Array.isArray(saved)) return DEFAULTS[key].map(function (t) { return { id: newId(), text: t }; });
+    return saved.map(function (i) { return typeof i === 'string' ? { id: newId(), text: i } : i; })
+      .filter(function (i) { return i && i.text; });
+  }
+
+  var state = {
+    lists: { pre: loadList('pre'), post: loadList('post') },
+    interval: store.get('interval', 10),
+    theme: store.get('theme', 'dark'),
+    last: store.get('last', { dest: '', reason: '' }),
+    preTicks: new Set(),
+    postTicks: new Set(),
+    preWarned: false,
+    postWarned: false,
+    muted: false,
+    micBlocked: false,
+    engine: store.get('engine', ''),
+    voice: store.get('voice', ''),
+    rate: store.get('rate', 1),
+    trip: store.get('trip', null)
+  };
+
+  var el = {
+    bubble: $('#bubble'), buddy: $('#buddy'),
+    setup: $('#screen-setup'), drive: $('#screen-drive'), arrive: $('#screen-arrive'),
+    dest: $('#dest'), reason: $('#reason'), preList: $('#pre-list'), postList: $('#post-list'),
+    interval: $('#interval'), go: $('#go'), theme: $('#theme'),
+    engineField: $('#engine-field'), engine: $('#engine'), voice: $('#voice'), rate: $('#rate'),
+    tryVoice: $('#try-voice'), voiceHint: $('#voice-hint'),
+    dDest: $('#d-dest'), dReason: $('#d-reason'), dMin: $('#d-min'), dNext: $('#d-next'),
+    dNextLabel: $('#d-next-label'), dCount: $('#d-count'),
+    park: $('#park'), mute: $('#mute'), arrived: $('#arrived'),
+    aTitle: $('#a-title'), parkNote: $('#park-note'), thoughts: $('#thoughts'), copy: $('#copy'),
+    done: $('#done'), backDrive: $('#back-drive')
+  };
+
+  /* ---------- helpers ---------- */
+  function setText(node, text) { text = String(text); if (node.textContent !== text) node.textContent = text; }
+  function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+  function listJoin(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+  function clean(s) { return (s || '').trim().replace(/[.!?\s]+$/, ''); }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function fmtTime(t) { return new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+  function saveLists() { store.set('pre', state.lists.pre); store.set('post', state.lists.post); }
+  function saveTrip() { if (state.trip) store.set('trip', state.trip); else store.del('trip'); }
+  function pick(arr, lastKey) {
+    var i = Math.floor(Math.random() * arr.length);
+    if (arr.length > 1 && i === pick[lastKey]) i = (i + 1) % arr.length;
+    pick[lastKey] = i;
+    return arr[i];
+  }
+
+  function show(name) {
+    el.setup.hidden = name !== 'setup';
+    el.drive.hidden = name !== 'drive';
+    el.arrive.hidden = name !== 'arrive';
+    window.scrollTo(0, 0);
+  }
+  function current() { return !el.drive.hidden ? 'drive' : !el.arrive.hidden ? 'arrive' : 'setup'; }
+
+  /* ---------- theme ---------- */
+  function applyTheme() {
+    document.documentElement.dataset.theme = state.theme;
+    var meta = document.querySelector('meta[name=theme-color]');
+    if (meta) meta.setAttribute('content', state.theme === 'light' ? '#FFF4EC' : '#2B1F3F');
+    setText(el.theme, state.theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+  }
+  el.theme.addEventListener('click', function () {
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    store.set('theme', state.theme);
+    applyTheme();
+  });
+
+  /* ---------- buddy ---------- */
+  function scheduleBlink() {
+    if (reduceMotion) return;
+    setTimeout(function () {
+      el.buddy.classList.add('blink');
+      setTimeout(function () { el.buddy.classList.remove('blink'); scheduleBlink(); }, 140);
+    }, 2500 + Math.random() * 4500);
+  }
+  function setListening(on) {
+    el.buddy.classList.toggle('listening', on);
+    el.park.classList.toggle('listening', on);
+    setText(el.park, on ? 'Listening… tap to stop' : 'Park a thought');
+  }
+
+  /* ---------- speech out ---------- */
+  function hasNative(fn) { return !!native && typeof native[fn] === 'function'; }
+
+  // Browser voices: English only, most natural-sounding first.
+  function webVoiceScore(v) {
+    var s = /^en[-_]US/i.test(v.lang) ? 100 : 50;
+    if (/natural|neural/i.test(v.name)) s += 40;
+    if (/premium|enhanced/i.test(v.name)) s += 30;
+    if (/google/i.test(v.name)) s += 20;
+    if (/online/i.test(v.name)) s += 10;
+    return s;
+  }
+  function webVoices() {
+    if (!('speechSynthesis' in window)) return [];
+    var vs = [];
+    try { vs = speechSynthesis.getVoices() || []; } catch (e) {}
+    return vs.filter(function (v) { return /^en/i.test(v.lang); })
+      .sort(function (a, b) { return webVoiceScore(b) - webVoiceScore(a) || a.name.localeCompare(b.name); });
+  }
+  var webVoice = null;
+  function pickVoice() {
+    if (webVoice) return webVoice;
+    var vs = webVoices();
+    webVoice = (state.voice && vs.filter(function (v) { return v.name === state.voice; })[0]) || vs[0] || null;
+    return webVoice;
+  }
+  if ('speechSynthesis' in window) {
+    try { speechSynthesis.addEventListener('voiceschanged', function () { webVoice = null; renderVoices(); }); } catch (e) {}
+  }
+
+  function say(text, opts) {
+    setText(el.bubble, text);
+    if ((opts && opts.speak === false) || state.muted) return;
+    if (native) { try { native.speak(text); } catch (e) {} return; }
+    if (!('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      u.rate = state.rate;
+      var v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function stopSpeaking() {
+    if (native) { try { native.stopSpeaking(); } catch (e) {} return; }
+    if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} }
+  }
+
+  /* ---------- voice picker ---------- */
+  function addOption(sel, value, label) {
+    var o = document.createElement('option');
+    o.value = value; o.textContent = label;
+    sel.appendChild(o);
+  }
+  var regionNames = null;
+  try { regionNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) {}
+  function regionOf(tag) {
+    var m = /^[a-z]{2,3}[-_]([A-Z]{2})/i.exec(tag || '');
+    if (!m) return 'English';
+    var code = m[1].toUpperCase();
+    try { return (regionNames && regionNames.of(code)) || code; } catch (e) { return code; }
+  }
+  function qualityWord(q) {
+    return q >= 500 ? 'very high quality' : q >= 400 ? 'high quality' : q >= 300 ? 'normal quality' : 'basic';
+  }
+  // Android voice names are codes like "en-us-x-tpf-local", so label them by region and quality.
+  function nativeVoiceList() {
+    var list = [];
+    try { list = JSON.parse(native.getVoices()) || []; } catch (e) {}
+    list.sort(function (a, b) {
+      var au = /[-_]US$/i.test(a.lang) ? 1 : 0, bu = /[-_]US$/i.test(b.lang) ? 1 : 0;
+      return (bu - au) || (b.quality - a.quality) || ((a.network ? 1 : 0) - (b.network ? 1 : 0)) || a.name.localeCompare(b.name);
+    });
+    var counts = {};
+    return list.map(function (v) {
+      var region = regionOf(v.lang);
+      counts[region] = (counts[region] || 0) + 1;
+      return {
+        name: v.name,
+        label: v.label || (region + ' ' + counts[region] + ' · ' + qualityWord(v.quality) + (v.network ? ' · needs internet' : ''))
+      };
+    });
+  }
+  function renderEngines() {
+    if (!hasNative('getEngines')) { el.engineField.hidden = true; return; }
+    var info = null;
+    try { info = JSON.parse(native.getEngines()); } catch (e) {}
+    if (!info || !info.engines || info.engines.length < 2) { el.engineField.hidden = true; return; }
+    el.engineField.hidden = false;
+    el.engine.textContent = '';
+    info.engines.forEach(function (e) {
+      addOption(el.engine, e.name, e.label + (e.name === info.defaultEngine ? ' (phone default)' : ''));
+    });
+    el.engine.value = info.current;
+  }
+  function renderVoices() {
+    var list = [];
+    if (native) { if (hasNative('getVoices')) list = nativeVoiceList(); }
+    else list = webVoices().map(function (v) { return { name: v.name, label: v.name + (v.localService ? '' : ' · needs internet') }; });
+    el.voice.textContent = '';
+    addOption(el.voice, '', list.length ? 'Auto (best available)' : 'Auto (loading voices…)');
+    list.forEach(function (v) { addOption(el.voice, v.name, v.label); });
+    el.voice.value = list.some(function (v) { return v.name === state.voice; }) ? state.voice : '';
+  }
+  function renderRate() {
+    Array.prototype.forEach.call(el.rate.querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', String(Number(b.dataset.rate) === state.rate));
+    });
+  }
+  window.onNativeTtsReady = function () { renderEngines(); renderVoices(); };
+
+  el.engine.addEventListener('change', function () {
+    state.engine = el.engine.value;
+    state.voice = '';
+    store.set('engine', state.engine);
+    store.set('voice', '');
+    el.voice.textContent = '';
+    addOption(el.voice, '', 'Auto (loading voices…)');
+    if (hasNative('setVoice')) native.setVoice('');
+    if (hasNative('setEngine')) native.setEngine(state.engine);
+  });
+  el.voice.addEventListener('change', function () {
+    state.voice = el.voice.value;
+    store.set('voice', state.voice);
+    webVoice = null;
+    if (hasNative('setVoice')) native.setVoice(state.voice);
+    say("Hi! This is how I'll sound on the road.");
+  });
+  el.rate.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.rate = Number(b.dataset.rate);
+    store.set('rate', state.rate);
+    renderRate();
+    if (hasNative('setRate')) native.setRate(state.rate);
+  });
+  el.tryVoice.addEventListener('click', function () {
+    say("Hi! This is how I'll sound on the road. Still headed to " + (clean(el.dest.value) || 'somewhere fun') + '?');
+  });
+  setText(el.voiceHint, native
+    ? 'The Waypoint natural voice runs right on your phone, so it works without signal. You can also pick any other voice engine installed on your phone.'
+    : 'Voices come from your browser and system. Ones labelled Natural or Online usually sound the most human.');
+
+  /* ---------- speech in ----------
+     Resolves with {text} or {error: 'blocked' | 'unsupported' | 'nothing' | 'stopped' | 'timeout'}.
+     It always settles: on a result, an error, a second tap (stop) or the timeout. */
+  var listenSession = null;
+  function listen() {
+    return new Promise(function (resolve) {
+      var settled = false, heard = '', cancel = function () {};
+      var timer = setTimeout(function () { cancel(); finish({ error: 'timeout' }); }, LISTEN_TIMEOUT);
+      function finish(result) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        listenSession = null;
+        if (native) window.onNativeSpeech = null;
+        resolve(result);
+      }
+      listenSession = { stop: function () { cancel(); finish({ error: 'stopped' }); } };
+
+      if (native) {
+        window.onNativeSpeech = function (msg) {
+          if (!msg) return;
+          if (msg.type === 'result') finish(msg.text ? { text: msg.text } : { error: 'nothing' });
+          else if (msg.type === 'error') {
+            finish({ error: msg.error === 'not-allowed' ? 'blocked' : msg.error === 'unavailable' ? 'unsupported' : 'nothing' });
+          }
+        };
+        cancel = function () { try { native.stopListening(); } catch (e) {} };
+        try { native.listen('en-US'); } catch (e) { finish({ error: 'unsupported' }); }
+        return;
+      }
+
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { finish({ error: 'unsupported' }); return; }
+      try {
+        var rec = new SR();
+        rec.lang = 'en-US';
+        rec.interimResults = false;
+        rec.continuous = false;
+        rec.maxAlternatives = 1;
+        rec.onresult = function (e) {
+          var r = e.results && e.results[0] && e.results[0][0];
+          heard = r ? String(r.transcript || '').trim() : '';
+          if (heard) finish({ text: heard });
+        };
+        rec.onerror = function (e) {
+          var er = e && e.error;
+          finish({ error: (er === 'not-allowed' || er === 'service-not-allowed' || er === 'audio-capture') ? 'blocked' : 'nothing' });
+        };
+        rec.onend = function () { finish(heard ? { text: heard } : { error: 'nothing' }); };
+        cancel = function () { try { rec.abort(); } catch (e) {} };
+        rec.start();
+      } catch (e) { finish({ error: 'unsupported' }); }
+    });
+  }
+  window.onNativeMicPermission = function (granted) { state.micBlocked = !granted; };
+
+  /* ---------- keep awake ---------- */
+  var wakeLock = null, wantAwake = false;
+  function keepAwake(on) {
+    wantAwake = on;
+    if (native) { try { native.keepAwake(on); } catch (e) {} return; }
+    if (!('wakeLock' in navigator)) return;
+    if (on && !wakeLock) {
+      navigator.wakeLock.request('screen').then(function (lock) {
+        wakeLock = lock;
+        lock.addEventListener('release', function () { wakeLock = null; });
+        if (!wantAwake) lock.release();
+      }).catch(function () {});
+    } else if (!on && wakeLock) {
+      wakeLock.release().catch(function () {});
+      wakeLock = null;
+    }
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && wantAwake) keepAwake(true);
+  });
+
+  /* ---------- checklists ---------- */
+  function renderChecklist(key) {
+    var ul = key === 'pre' ? el.preList : el.postList;
+    var ticks = key === 'pre' ? state.preTicks : state.postTicks;
+    ul.textContent = '';
+    state.lists[key].forEach(function (item) {
+      var li = document.createElement('li');
+      var lab = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = ticks.has(item.id);
+      cb.addEventListener('change', function () {
+        if (cb.checked) ticks.add(item.id); else ticks.delete(item.id);
+        onTicksChanged(key);
+      });
+      var sp = document.createElement('span');
+      sp.textContent = item.text;
+      lab.appendChild(cb); lab.appendChild(sp);
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'x'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove ' + item.text);
+      x.addEventListener('click', function () {
+        state.lists[key] = state.lists[key].filter(function (i) { return i.id !== item.id; });
+        ticks.delete(item.id);
+        saveLists();
+        renderChecklist(key);
+        onTicksChanged(key);
+      });
+      li.appendChild(lab); li.appendChild(x);
+      ul.appendChild(li);
+    });
+    if (!state.lists[key].length) {
+      var e = document.createElement('li');
+      e.className = 'empty';
+      e.textContent = 'Nothing here yet. Add something below.';
+      ul.appendChild(e);
+    }
+  }
+  function onTicksChanged(key) {
+    if (key === 'pre') {
+      state.preWarned = false;
+      setText(el.go, "Let's go");
+    } else {
+      state.postWarned = false;
+      setText(el.done, 'Done');
+      if (state.trip) { state.trip.postTicks = Array.from(state.postTicks); saveTrip(); }
+    }
+  }
+  function untickedText(key) {
+    var ticks = key === 'pre' ? state.preTicks : state.postTicks;
+    return state.lists[key].filter(function (i) { return !ticks.has(i.id); }).map(function (i) { return i.text; });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('form.add-row'), function (f) {
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var inp = f.querySelector('input');
+      var t = inp.value.trim();
+      if (!t) return;
+      var key = f.dataset.list;
+      state.lists[key].push({ id: newId(), text: t });
+      saveLists();
+      inp.value = '';
+      renderChecklist(key);
+      onTicksChanged(key);
+    });
+  });
+
+  /* ---------- interval ---------- */
+  function renderInterval() {
+    Array.prototype.forEach.call(el.interval.querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', String(Number(b.dataset.min) === state.interval));
+    });
+  }
+  el.interval.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.interval = Number(b.dataset.min);
+    store.set('interval', state.interval);
+    renderInterval();
+  });
+
+  /* ---------- setup ---------- */
+  el.dest.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); el.reason.focus(); } });
+  el.reason.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); el.reason.blur(); } });
+
+  el.go.addEventListener('click', function () {
+    var dest = el.dest.value.trim(), reason = el.reason.value.trim();
+    if (!dest) { say('Where are we headed? Type a destination first.'); el.dest.focus(); return; }
+    var unticked = untickedText('pre');
+    if (unticked.length && !state.preWarned) {
+      state.preWarned = true;
+      setText(el.go, 'Go anyway');
+      say("Before we go, you haven't ticked " + listJoin(unticked) + '. Tap Go anyway when you\'re ready.');
+      return;
+    }
+    state.last = { dest: dest, reason: reason };
+    store.set('last', state.last);
+    var now = Date.now();
+    state.trip = {
+      phase: 'drive', dest: dest, reason: reason, startedAt: now, interval: state.interval,
+      nextCheck: now + state.interval * 60000, breaksGiven: 0, thoughts: [], postTicks: [], parkNote: ''
+    };
+    saveTrip();
+    state.postTicks = new Set();
+    startDrive();
+    var r = clean(reason);
+    say("Let's go! Heading to " + clean(dest) + (r ? ', to ' + r : '') + '. ' +
+      (state.interval ? "I'll check in every " + state.interval + ' minutes.' : "Check-ins are off, but I'm right here.") +
+      ' Eyes on the road.');
+  });
+
+  /* ---------- driving ---------- */
+  var tickTimer = null;
+  var CHECKINS_WITH_REASON = [
+    function (d, r) { return 'Still headed to ' + d + '. The plan: ' + r + '.'; },
+    function (d, r) { return 'Quick check-in. ' + d + ', to ' + r + ". You've got this."; },
+    function (d, r) { return "Just a nudge: we're on the way to " + d + '. Reminder: ' + r + '.'; },
+    function (d, r, m) { return plural(m, 'minute') + ' in. Still going to ' + d + '. ' + cap(r) + '.'; },
+    function (d, r) { return "Hey, it's me. Destination: " + d + '. Mission: ' + r + '.'; }
+  ];
+  var CHECKINS = [
+    function (d) { return 'Still headed to ' + d + '.'; },
+    function (d) { return 'Quick check-in. Still on the way to ' + d + '?'; },
+    function (d, r, m) { return plural(m, 'minute') + ' in. ' + d + ' is still the plan.'; },
+    function (d) { return "Just a nudge: we're going to " + d + '.'; },
+    function (d) { return "Hey, it's me. Still heading to " + d + '. Nice driving.'; }
+  ];
+  function checkinLine(mins) {
+    var t = state.trip, d = clean(t.dest), r = clean(t.reason);
+    var fn = r ? pick(CHECKINS_WITH_REASON, 'lastR') : pick(CHECKINS, 'last');
+    return fn(d, r, mins);
+  }
+  function breakLine(hours) {
+    return hours === 1
+      ? "You've been driving for an hour. When it's safe, a quick stretch break might feel good."
+      : plural(hours, 'hour') + " of driving. Let's find a safe spot for a break soon.";
+  }
+
+  function startDrive() {
+    var t = state.trip;
+    show('drive');
+    setText(el.dDest, t.dest);
+    setText(el.dReason, t.reason || '');
+    el.dReason.hidden = !t.reason;
+    renderCount();
+    keepAwake(true);
+    clearInterval(tickTimer);
+    tick();
+    tickTimer = setInterval(tick, 5000);
+  }
+  function tick() {
+    var t = state.trip;
+    if (!t || t.phase !== 'drive') return;
+    var now = Date.now();
+    var mins = Math.floor((now - t.startedAt) / 60000);
+    setText(el.dMin, mins);
+
+    if (!listenSession) {
+      var hours = Math.floor(mins / 60);
+      if (hours > (t.breaksGiven || 0)) {
+        t.breaksGiven = hours;
+        if (t.interval) t.nextCheck = now + t.interval * 60000;
+        saveTrip();
+        say(breakLine(hours));
+      } else if (t.interval && now >= t.nextCheck) {
+        t.nextCheck = now + t.interval * 60000;
+        saveTrip();
+        say(checkinLine(mins));
+      }
+    }
+
+    if (t.interval) {
+      setText(el.dNext, Math.max(1, Math.ceil((t.nextCheck - now) / 60000)));
+      setText(el.dNextLabel, 'min to check-in');
+    } else {
+      setText(el.dNext, '–');
+      setText(el.dNextLabel, 'check-ins off');
+    }
+  }
+  function renderCount() {
+    var n = state.trip ? state.trip.thoughts.length : 0;
+    setText(el.dCount, n ? plural(n, 'thought') + ' parked' : '');
+  }
+  function addThought(text) {
+    if (!state.trip) return;
+    state.trip.thoughts.push({ t: Date.now(), text: text || '' });
+    saveTrip();
+    renderCount();
+    if (current() === 'arrive') renderThoughts();
+  }
+
+  el.park.addEventListener('click', function () {
+    if (listenSession) { listenSession.stop(); return; }
+    if (state.micBlocked) {
+      addThought(null);
+      say("Marker saved. The mic's blocked, so tell me the thought when you arrive.");
+      return;
+    }
+    stopSpeaking();
+    setListening(true);
+    say('Listening… tap again to stop.', { speak: false });
+    listen().then(function (r) {
+      setListening(false);
+      if (!state.trip || state.trip.phase !== 'drive') {
+        // Arrived while listening: keep real text, skip the chatter.
+        if (r.text) addThought(r.text);
+        return;
+      }
+      if (r.text) { addThought(r.text); say('Parked it: ' + r.text); return; }
+      addThought(null);
+      if (r.error === 'blocked') { state.micBlocked = true; say("I can't use the mic, so I saved a time marker instead."); }
+      else if (r.error === 'unsupported') { state.micBlocked = true; say("Voice input isn't available here, so I saved a time marker."); }
+      else if (r.error === 'stopped') say('Stopped. I saved a time marker.');
+      else say("Didn't catch that, so I saved a time marker.");
+    });
+  });
+
+  el.mute.addEventListener('click', function () {
+    state.muted = !state.muted;
+    if (state.muted) stopSpeaking();
+    el.mute.setAttribute('aria-pressed', String(state.muted));
+    setText(el.mute, state.muted ? 'Unmute' : 'Mute');
+    setText(el.bubble, state.muted ? "Muted. I'll keep quiet, but I'm still here." : "I'm back. I'll talk again.");
+  });
+
+  el.arrived.addEventListener('click', function () {
+    var t = state.trip;
+    if (listenSession) listenSession.stop();
+    clearInterval(tickTimer);
+    keepAwake(false);
+    t.phase = 'arrived';
+    t.arrivedAt = Date.now();
+    saveTrip();
+    showArrive();
+    var n = t.thoughts.length;
+    say('You made it to ' + clean(t.dest) + '! Quick check before you walk away.' +
+      (n ? ' You parked ' + plural(n, 'thought') + '.' : ''));
+  });
+
+  /* ---------- arrived ---------- */
+  function showArrive() {
+    var t = state.trip;
+    state.postTicks = new Set(t.postTicks || []);
+    state.postWarned = false;
+    setText(el.done, 'Done');
+    show('arrive');
+    setText(el.aTitle, 'You made it to ' + t.dest + '!');
+    el.parkNote.value = t.parkNote || '';
+    renderChecklist('post');
+    renderThoughts();
+  }
+  function renderThoughts() {
+    var list = state.trip ? state.trip.thoughts : [];
+    el.thoughts.textContent = '';
+    list.forEach(function (th, idx) {
+      var li = document.createElement('li');
+      var time = document.createElement('span');
+      time.className = 'time';
+      time.textContent = fmtTime(th.t);
+      var txt = document.createElement('span');
+      txt.className = 'text' + (th.text ? '' : ' marker');
+      txt.textContent = th.text || 'Marker. You wanted to remember something here.';
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'x'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove thought from ' + fmtTime(th.t));
+      x.addEventListener('click', function () {
+        state.trip.thoughts.splice(idx, 1);
+        saveTrip();
+        renderThoughts();
+      });
+      li.appendChild(time); li.appendChild(txt); li.appendChild(x);
+      el.thoughts.appendChild(li);
+    });
+    if (!list.length) {
+      var e = document.createElement('li');
+      e.className = 'empty';
+      e.textContent = 'No thoughts parked this trip.';
+      el.thoughts.appendChild(e);
+    }
+    el.copy.hidden = !list.length;
+  }
+  el.parkNote.addEventListener('input', function () {
+    if (!state.trip) return;
+    state.trip.parkNote = el.parkNote.value;
+    saveTrip();
+  });
+  el.copy.addEventListener('click', function () {
+    var t = state.trip;
+    var lines = t.thoughts.map(function (th) { return fmtTime(th.t) + ' ' + (th.text || '(marker)'); });
+    if (t.parkNote) lines.unshift('Parked: ' + t.parkNote);
+    var text = lines.join('\n');
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(fallback);
+    else fallback();
+    say('Copied.', { speak: false });
+  });
+  el.done.addEventListener('click', function () {
+    var unticked = untickedText('post');
+    if (unticked.length && !state.postWarned) {
+      state.postWarned = true;
+      setText(el.done, "I'm sure, done");
+      say("You haven't ticked " + listJoin(unticked) + '. Tap again if you\'re sure.');
+      return;
+    }
+    state.trip = null;
+    saveTrip();
+    state.preTicks = new Set();
+    state.preWarned = false;
+    setText(el.go, "Let's go");
+    renderChecklist('pre');
+    show('setup');
+    say('All wrapped up. Where to next?');
+  });
+  el.backDrive.addEventListener('click', function () {
+    var t = state.trip;
+    t.phase = 'drive';
+    delete t.arrivedAt;
+    if (t.interval) t.nextCheck = Date.now() + t.interval * 60000;
+    saveTrip();
+    startDrive();
+    say('Okay, back on the road.');
+  });
+
+  /* Android back button: stay put while driving. */
+  window.waypointBack = function () {
+    if (current() === 'drive') { say("Still driving. Tap I've arrived when you're there.", { speak: false }); return true; }
+    return false;
+  };
+
+  /* ---------- boot ---------- */
+  applyTheme();
+  renderInterval();
+  renderRate();
+  if (hasNative('setRate')) {
+    native.setRate(state.rate);
+    native.setVoice(state.voice);
+    if (state.engine) native.setEngine(state.engine);
+  }
+  renderEngines();
+  renderVoices();
+  renderChecklist('pre');
+  el.dest.value = state.last.dest || '';
+  el.reason.value = state.last.reason || '';
+  scheduleBlink();
+
+  var trip = state.trip;
+  if (trip && trip.phase === 'drive' && Date.now() - trip.startedAt > 12 * 3600000) {
+    trip.phase = 'arrived';
+    saveTrip();
+  }
+  if (trip && trip.phase === 'drive') {
+    say('Welcome back. Still headed to ' + clean(trip.dest) + '.', { speak: false });
+    startDrive(); // may replace the bubble with a check-in that came due while away
+  } else if (trip && trip.phase === 'arrived') {
+    showArrive();
+    say('Here are your notes from the last trip.', { speak: false });
+  } else {
+    state.trip = null;
+    show('setup');
+  }
+})();
+</script>
+</body>
+</html>
